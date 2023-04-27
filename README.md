@@ -2,27 +2,27 @@
 
 ## 初回セットアップ
 
-```
+```bash
 npm install  
-cp app/.nv.sample app/.env
+cp .env.example .env
 ```
 
 envの設定をする
 
-```
+```bash
 USER="shino3.bsky.social"
 PASS=password
 ```
 
 ## 実行
 
-```
+```bash
 node index.js
 ```
 
 ## 実行結果
 
-```
+```json
 {
   "did:plc:pxl45temnwmcdad6ent7phf6": [
     {
@@ -51,11 +51,16 @@ node index.js
       "handle": "at://shino5.bsky.social",
       "created": "2023/04/09 14:40:07"
     }
-  ],
-  ...
-  
+  ]
+}  
 ```
 
 ## node version
 
 v18
+
+## docker環境
+
+https://github.com/ShinoharaTa/node-docker
+
+使用方法はリポジトリの説明を読んで下さい
