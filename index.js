@@ -1,10 +1,5 @@
-import fs from "fs";
-import path from "path";
-import axios from "axios";
-import moment from "moment-timezone";
 import bsky from "@atproto/api";
-import dotenv from "dotenv";
-dotenv.config();
+import { accounts } from "./accounts.js";
 
 const { BskyAgent } = bsky;
 let self = null;
@@ -22,45 +17,30 @@ const login = async function (params = { identifier, password }) {
 
 async function getInviteCodes() {
   const { data } = await agent.api.com.atproto.server.getAccountInviteCodes();
-  let response = [];
-  data.codes.map(item => {
-    response = response.concat(item.uses);
+  let unuse = data.codes
+    .filter((item) => item.uses.length === 0)
+    .map((item) => {
+      return item.code;
+    });
+  let use = data.codes
+    .filter((item) => item.uses.length > 0)
+    .map((item) => {
+      return item.code;
+    });
+  return { unuse, use };
+}
+
+let unuses = 0;
+let uses = 0;
+for (const account of accounts) {
+  await login({ identifier: account.user, password: account.pass });
+  const { unuse, use } = await getInviteCodes();
+  unuse.forEach((code) => {
+    console.log(code);
   });
-  console.log(response)
-  return response;
+  unuses += unuse.length;
+  uses += use.length;
 }
 
-async function getPlcDir(did) {
-  const response = await axios.get(
-    "https://plc.directory/" + did + "/log/audit"
-  );
-  return response.data;
-}
-
-const now = moment().tz("Asia/Tokyo");
-
-// const userlist = JSON.parse(fs.readFileSync("./userlist.json", "utf-8"));
-await login({identifier: process.env.USER, password: process.env.PASS});
-const userlist = await getInviteCodes();
-const fileout = {};
-
-for (const user of userlist) {
-  const data = await getPlcDir(user.usedBy);
-  let logs = data.map((item) => {
-    return {
-      did: item.did,
-      handle: item.operation.alsoKnownAs[0],
-      created: moment(item.createdAt)
-        .tz("Asia/Tokyo")
-        .format("YYYY/MM/DD HH:mm:ss"),
-    };
-  });
-  fileout[user.usedBy] = logs;
-}
-
-const outputPath = path.join(
-  process.cwd(),
-  "out",
-  now.format("YYYYMMDD_HHmmss") + ".json"
-);
-fs.writeFileSync(outputPath, JSON.stringify(fileout, null, 2));
+console.log("uses total    :", uses);
+console.log("unuses total  :", unuses);
